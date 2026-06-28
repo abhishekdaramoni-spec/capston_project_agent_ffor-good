@@ -86,8 +86,14 @@ export function LoginPage({ onLogin, theme, fontSize }: LoginPageProps) {
     try {
       await new Promise((resolve) => setTimeout(resolve, 1200));
       
-      const displayName = isSignUp ? name : email.split("@")[0].split(".")[0];
-      const capitalizedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+      let displayName = isSignUp ? name : (name || email.split("@")[0].split(".")[0]);
+      if (email.toLowerCase().trim() === "doctor.demo@healthmate.ai") {
+        displayName = "Dr. Sarah Chen";
+      } else if (email.toLowerCase().trim() === "patient@healthmate.ai") {
+        displayName = "Alex Mercer";
+      }
+      
+      const capitalizedName = displayName.startsWith("Dr.") ? displayName : displayName.charAt(0).toUpperCase() + displayName.slice(1);
       
       setSuccess(true);
       await new Promise((resolve) => setTimeout(resolve, 600));

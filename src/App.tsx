@@ -13,7 +13,10 @@ import {
   Eye,
   Type,
   FileText,
-  CheckCircle
+  CheckCircle,
+  MessageSquare,
+  Send,
+  AlertTriangle
 } from "lucide-react";
 import {
   RiskLevel,
@@ -26,6 +29,7 @@ import {
 // Import modular components
 import { LoginPage } from "./components/LoginPage";
 import { DashboardView } from "./components/DashboardView";
+import { DoctorDashboardView } from "./components/DoctorDashboardView";
 import { SymptomChecker } from "./components/SymptomChecker";
 import { MedicineScanner } from "./components/MedicineScanner";
 import { MedicineCabinet } from "./components/MedicineCabinet";
@@ -126,6 +130,30 @@ export default function App() {
     ];
   });
 
+  const [dispatchedAlerts, setDispatchedAlerts] = useState<{ id: string; message: string; timestamp: string; status: 'sent' | 'acknowledged'; reply?: string }[]>(() => {
+    const local = safeStorage.getItem("healthmate-emergency-alerts");
+    if (local) {
+      try {
+        return JSON.parse(local);
+      } catch (e) {
+        console.error("Failed to parse emergency alerts", e);
+      }
+    }
+    return [
+      {
+        id: "alert_init1",
+        message: "SYSTEM INTEGRITY CHECK: Secure clinical messaging channel established with On-Call dashboard.",
+        timestamp: "Today at 08:30 AM",
+        status: "acknowledged",
+        reply: "Welcome to the clinical dispatch deck. All auto-alerts are compiled and relayed instantly to Dr. Sarah Chen's active dashboard."
+      }
+    ];
+  });
+
+  const [newAlertText, setNewAlertText] = useState("");
+  const [isSendingAlert, setIsSendingAlert] = useState(false);
+  const [autoAttachMetrics, setAutoAttachMetrics] = useState(true);
+
   // Sync Tailwind & Document styling class lists
   useEffect(() => {
     const root = window.document.documentElement;
@@ -150,6 +178,10 @@ export default function App() {
   useEffect(() => {
     safeStorage.setItem("healthmate-saved-reports", JSON.stringify(savedReports));
   }, [savedReports]);
+
+  useEffect(() => {
+    safeStorage.setItem("healthmate-emergency-alerts", JSON.stringify(dispatchedAlerts));
+  }, [dispatchedAlerts]);
 
   // Handlers
   const handleToggleReminder = (id: string) => {
@@ -212,6 +244,38 @@ export default function App() {
     safeStorage.setItem("healthmate-auth-user", "");
   };
 
+  const handleSendEmergencyAlert = (text: string) => {
+    if (!text.trim()) return;
+    setIsSendingAlert(true);
+
+    const alertId = "alert_" + Math.random().toString(36).substring(2, 9);
+    const newAlert = {
+      id: alertId,
+      message: text,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " (Direct Alert)",
+      status: 'sent' as const
+    };
+
+    setDispatchedAlerts(prev => [newAlert, ...prev]);
+    setNewAlertText("");
+
+    // Simulate clinical handshake, encryption, and automatic doctor notification
+    setTimeout(() => {
+      setDispatchedAlerts(prev => prev.map(alert => {
+        if (alert.id === alertId) {
+          const docName = user?.email === "doctor.demo@healthmate.ai" ? "Dr. Marcus Vance (Chief of Duty)" : "Dr. Sarah Chen (On-Call Practitioner)";
+          return {
+            ...alert,
+            status: 'acknowledged' as const,
+            reply: `Automated Dispatch Reception: ${docName} has received this emergency telemetry payload. Your logged Medicine Cabinet records (${savedMedicines.map(m => m.name).join(", ") || "None"}) and active symptoms list are now queued in Dr. Chen's next active clinical panel dashboard.`
+          };
+        }
+        return alert;
+      }));
+      setIsSendingAlert(false);
+    }, 1500);
+  };
+
   if (!user) {
     return (
       <div className={`min-h-screen flex flex-col justify-center transition-all duration-300 ${
@@ -231,6 +295,8 @@ export default function App() {
       </div>
     );
   }
+
+  const isDoctor = user?.name?.toLowerCase().startsWith("dr.") || user?.email?.toLowerCase().includes("doctor") || user?.email === "doctor.demo@healthmate.ai";
 
   return (
     <div className={`min-h-screen flex flex-col transition-all duration-300 ${
@@ -263,11 +329,11 @@ export default function App() {
           {/* Navigation Controls */}
           <nav className="flex items-center gap-1">
             {[
-              { id: "dashboard", label: "Dashboard" },
-              { id: "checker", label: "Symptom Checker" },
-              { id: "scanner", label: "Medicine Scanner" },
-              { id: "medicines", label: "My Cabinet" },
-              { id: "reports", label: "Triage Logs" }
+              { id: "dashboard", label: isDoctor ? "Patient Management" : "Dashboard" },
+              { id: "checker", label: isDoctor ? "Clinical Triage Tool" : "Symptom Checker" },
+              { id: "scanner", label: isDoctor ? "Smart Pill Scan" : "Medicine Scanner" },
+              { id: "medicines", label: isDoctor ? "Pharmacy Database" : "My Cabinet" },
+              { id: "reports", label: isDoctor ? "Audit Triage Logs" : "Triage Logs" }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -352,8 +418,8 @@ export default function App() {
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          {/* Main Stage Panel (9 Columns) */}
-          <main className="lg:col-span-9 space-y-6">
+          {/* Main Stage Panel (9 Columns, or 12 Columns for Doctor Dashboard) */}
+          <main className={`${isDoctor && activeTab === "dashboard" ? "lg:col-span-12" : "lg:col-span-9"} space-y-6`}>
             
             {/* If a report detail view is actively chosen */}
             {selectedHistoricalReport ? (
@@ -365,18 +431,27 @@ export default function App() {
             ) : (
               <>
                 {activeTab === "dashboard" && (
-                  <DashboardView
-                    savedMedicines={savedMedicines}
-                    reminders={reminders}
-                    toggleReminder={handleToggleReminder}
-                    savedReports={savedReports}
-                    onOpenReport={handleOpenHistoricalReport}
-                    onStartSymptomCheck={() => setActiveTab("checker")}
-                    onStartMedicineScan={() => setActiveTab("scanner")}
-                    theme={theme}
-                    fontSize={fontSize}
-                    userName={user.name}
-                  />
+                  isDoctor ? (
+                    <DoctorDashboardView
+                      theme={theme}
+                      fontSize={fontSize}
+                      userName={user.name}
+                      onLogout={handleLogout}
+                    />
+                  ) : (
+                    <DashboardView
+                      savedMedicines={savedMedicines}
+                      reminders={reminders}
+                      toggleReminder={handleToggleReminder}
+                      savedReports={savedReports}
+                      onOpenReport={handleOpenHistoricalReport}
+                      onStartSymptomCheck={() => setActiveTab("checker")}
+                      onStartMedicineScan={() => setActiveTab("scanner")}
+                      theme={theme}
+                      fontSize={fontSize}
+                      userName={user.name}
+                    />
+                  )
                 )}
 
                 {activeTab === "checker" && (
@@ -419,7 +494,8 @@ export default function App() {
           </main>
 
           {/* Sidebar Panel (3 Columns) */}
-          <aside className="lg:col-span-3 flex flex-col gap-6">
+          {(!isDoctor || activeTab !== "dashboard") && (
+            <aside className="lg:col-span-3 flex flex-col gap-6">
             
             {/* Daily Schedule Reminders card */}
             <div className={`p-6 rounded-3xl border ${theme === "light" ? "bg-white border-slate-200" : theme === "contrast" ? "bg-black border-white" : "bg-white/5 border-white/10"}`}>
@@ -451,28 +527,120 @@ export default function App() {
               </div>
             </div>
 
-            {/* Emergency Hotlines Contacts (Safety mandate) */}
-            <div className={`p-6 rounded-3xl border border-rose-500/10 ${theme === "light" ? "bg-rose-50/50" : theme === "contrast" ? "bg-black border-white" : "bg-rose-950/5"}`}>
+            {/* Emergency Alerts & On-Call Doctor Dispatcher */}
+            <div className={`p-6 rounded-3xl border border-rose-500/10 ${
+              theme === "light" ? "bg-rose-50/50 text-slate-900 animate-fade-in" : theme === "contrast" ? "bg-black border-white text-white" : "bg-rose-950/5 text-slate-300"
+            }`}>
               <h3 className="text-xs font-bold uppercase tracking-widest text-rose-400 mb-3 flex items-center gap-1.5">
-                <Phone className="w-4 h-4 text-rose-400" /> Emergency Hotline
+                <MessageSquare className="w-4 h-4 text-rose-400" /> On-Call Doctor Dispatch
               </h3>
-              
-              <div className="p-3 bg-white/5 rounded-xl border border-white/5 mb-3 text-xs">
-                <p className="font-bold text-slate-200">National Emergency Services</p>
-                <p className="text-blue-300 font-bold font-mono text-sm mt-1">911 (US / Global Standard)</p>
+
+              {/* Doctor Status Badge */}
+              <div className="p-3 bg-white/5 rounded-2xl border border-white/5 mb-3 text-xs flex items-center gap-2.5">
+                <div className="relative">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 block animate-ping absolute top-0 right-0"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 block relative"></span>
+                </div>
+                <div>
+                  <p className="font-bold text-[11px] text-slate-200">
+                    {user?.email === "doctor.demo@healthmate.ai" ? "Dr. Marcus Vance (Chief of Duty)" : "Dr. Sarah Chen (Consulting Practitioner)"}
+                  </p>
+                  <p className="text-[9px] text-slate-500 font-mono">NEXT ACTIVE CLINICAL PANEL DASHBOARD</p>
+                </div>
               </div>
 
-              <div className="p-3 bg-white/5 rounded-xl border border-white/5 mb-4 text-xs">
-                <p className="font-bold text-slate-200">Poison Control Center Hotline</p>
-                <p className="text-blue-300 font-bold font-mono text-sm mt-1">1-800-222-1222</p>
+              {/* Input for dispatch message */}
+              <div className="space-y-2 mb-3">
+                <textarea
+                  value={newAlertText}
+                  onChange={(e) => setNewAlertText(e.target.value)}
+                  placeholder="Type symptoms or select quick presets below..."
+                  className={`w-full h-16 p-2.5 text-xs rounded-xl border outline-none resize-none font-sans transition-all ${
+                    theme === "light"
+                      ? "bg-white border-slate-200 text-slate-900 focus:border-rose-500"
+                      : "bg-slate-950/40 border-white/5 text-slate-200 focus:border-rose-500/40 focus:bg-slate-950"
+                  }`}
+                />
+
+                {/* Quick Presets */}
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    "🚨 Adverse medication interaction",
+                    "⚠️ Intense migraine & dizziness",
+                    "🛑 Sudden vitals fluctuation",
+                    "📞 Callback request"
+                  ].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setNewAlertText(preset)}
+                      className="text-[9px] px-2 py-1 bg-white/5 border border-white/5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer"
+                    >
+                      {preset.split(" ")[0]} {preset.substring(preset.indexOf(" ") + 1)}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Auto Attach Checkbox */}
+                <label className="flex items-center gap-1.5 pl-0.5 mt-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={autoAttachMetrics}
+                    onChange={(e) => setAutoAttachMetrics(e.target.checked)}
+                    className="rounded border-white/5 bg-slate-950 text-rose-500 focus:ring-rose-500/20"
+                  />
+                  <span className="text-[9px] text-slate-500">
+                    Auto-attach cabinet meds & triage telemetry logs
+                  </span>
+                </label>
               </div>
 
-              <a
-                href="tel:911"
-                className="block text-center w-full py-3 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl font-bold text-xs transition-colors shadow-lg shadow-rose-950/25 cursor-pointer"
+              {/* Action dispatch trigger */}
+              <button
+                type="button"
+                onClick={() => handleSendEmergencyAlert(newAlertText)}
+                disabled={isSendingAlert || !newAlertText.trim()}
+                className={`w-full py-2.5 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-xl font-bold text-xs transition-colors shadow-lg shadow-rose-950/25 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50`}
               >
-                Call Emergency Hotlines
-              </a>
+                {isSendingAlert ? (
+                  <>
+                    <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    Encrypting & Dispatching...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-3.5 h-3.5" />
+                    Transmit Auto-Alert to Doctor
+                  </>
+                )}
+              </button>
+
+              {/* Dispatch Alert logs list */}
+              {dispatchedAlerts.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-white/5 space-y-2.5 max-h-[160px] overflow-y-auto pr-0.5">
+                  <span className="text-[9px] font-bold text-slate-500 block tracking-wider uppercase">Active Dispatch Telemetry</span>
+                  {dispatchedAlerts.map((alert) => (
+                    <div key={alert.id} className="p-2.5 bg-white/5 border border-white/5 rounded-xl space-y-1 text-[10px]">
+                      <div className="flex justify-between items-center">
+                        <span className={`text-[8px] px-1.5 py-0.5 rounded font-bold uppercase font-mono ${
+                          alert.status === "acknowledged" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/10" : "bg-amber-500/10 text-amber-400"
+                        }`}>
+                          {alert.status === "acknowledged" ? "● ACKNOWLEDGED" : "● DISPATCHED"}
+                        </span>
+                        <span className="text-[8px] text-slate-500">{alert.timestamp}</span>
+                      </div>
+                      <p className="text-slate-300 font-sans italic">"{alert.message}"</p>
+                      
+                      {alert.reply && (
+                        <div className="mt-1.5 p-1.5 bg-emerald-500/5 border border-emerald-500/10 rounded text-[9px] text-emerald-300">
+                          <p className="font-bold mb-0.5">Doctor Automated Response:</p>
+                          <p className="leading-tight text-slate-300 font-sans">{alert.reply}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Risk Colors Explanation Legend (UX layout) */}
@@ -506,7 +674,8 @@ export default function App() {
               </div>
             </div>
 
-          </aside>
+            </aside>
+          )}
 
         </div>
 
