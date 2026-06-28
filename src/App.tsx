@@ -298,6 +298,17 @@ export default function App() {
 
   const isDoctor = user?.name?.toLowerCase().startsWith("dr.") || user?.email?.toLowerCase().includes("doctor") || user?.email === "doctor.demo@healthmate.ai";
 
+  if (isDoctor) {
+    return (
+      <DoctorDashboardView
+        theme={theme}
+        fontSize={fontSize}
+        userName={user.name}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
   return (
     <div className={`min-h-screen flex flex-col transition-all duration-300 ${
       fontSize === "large" ? "text-lg" : "text-sm"
@@ -418,8 +429,8 @@ export default function App() {
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          {/* Main Stage Panel (9 Columns, or 12 Columns for Doctor Dashboard) */}
-          <main className={`${isDoctor && activeTab === "dashboard" ? "lg:col-span-12" : "lg:col-span-9"} space-y-6`}>
+          {/* Main Stage Panel (9 Columns) */}
+          <main className="lg:col-span-9 space-y-6">
             
             {/* If a report detail view is actively chosen */}
             {selectedHistoricalReport ? (
@@ -431,27 +442,18 @@ export default function App() {
             ) : (
               <>
                 {activeTab === "dashboard" && (
-                  isDoctor ? (
-                    <DoctorDashboardView
-                      theme={theme}
-                      fontSize={fontSize}
-                      userName={user.name}
-                      onLogout={handleLogout}
-                    />
-                  ) : (
-                    <DashboardView
-                      savedMedicines={savedMedicines}
-                      reminders={reminders}
-                      toggleReminder={handleToggleReminder}
-                      savedReports={savedReports}
-                      onOpenReport={handleOpenHistoricalReport}
-                      onStartSymptomCheck={() => setActiveTab("checker")}
-                      onStartMedicineScan={() => setActiveTab("scanner")}
-                      theme={theme}
-                      fontSize={fontSize}
-                      userName={user.name}
-                    />
-                  )
+                  <DashboardView
+                    savedMedicines={savedMedicines}
+                    reminders={reminders}
+                    toggleReminder={handleToggleReminder}
+                    savedReports={savedReports}
+                    onOpenReport={handleOpenHistoricalReport}
+                    onStartSymptomCheck={() => setActiveTab("checker")}
+                    onStartMedicineScan={() => setActiveTab("scanner")}
+                    theme={theme}
+                    fontSize={fontSize}
+                    userName={user.name}
+                  />
                 )}
 
                 {activeTab === "checker" && (

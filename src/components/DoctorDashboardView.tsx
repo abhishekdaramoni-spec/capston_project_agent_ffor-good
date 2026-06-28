@@ -115,7 +115,7 @@ export function DoctorDashboardView({
 }: DoctorDashboardViewProps) {
   // Current Active Sidebar Page
   const [activePage, setActivePage] = useState<
-    "dashboard" | "patients" | "scanner" | "checker" | "reports" | "emergency" | "settings"
+    "dashboard" | "patients" | "reports" | "emergency" | "settings"
   >("dashboard");
 
   // Roster database of 6 static mock patients with deep clinically relevant features
@@ -724,8 +724,6 @@ Report Handshake Signature: AES-256 System Integrity Checked.
                 {[
                   { id: "dashboard", label: "Dashboard", icon: Activity },
                   { id: "patients", label: "Patient Roster", icon: User },
-                  { id: "scanner", label: "Medicine Scanner", icon: Layers },
-                  { id: "checker", label: "Symptom Checker", icon: Brain },
                   { id: "reports", label: "AI Reports Hub", icon: FileText },
                   { id: "emergency", label: "Emergency Alerts", icon: Ambulance },
                   { id: "settings", label: "Settings", icon: Settings }
@@ -1072,12 +1070,6 @@ Report Handshake Signature: AES-256 System Integrity Checked.
 
                           <div className="flex justify-between items-center pt-1 border-t border-white/5">
                             <span className="text-[9px] text-slate-400">Scan Time: Today 10:35 AM</span>
-                            <button
-                              onClick={() => setActivePage("scanner")}
-                              className="text-xs font-semibold text-blue-400 hover:underline"
-                            >
-                              Open Scanner
-                            </button>
                           </div>
                         </div>
                       ) : (
@@ -1313,126 +1305,7 @@ Report Handshake Signature: AES-256 System Integrity Checked.
             </div>
           )}
 
-          {/* SUB-PAGE: MEDICINE SCANNER */}
-          {activePage === "scanner" && (
-            <div className={`p-6 rounded-2xl border ${borderCol} ${cardBg} space-y-6`}>
-              <div className="pb-3 border-b border-white/10">
-                <h3 className="text-base font-bold text-white">Advanced Medicine OCR Scanner</h3>
-                <p className="text-xs text-slate-400">Review scanned medication bottles, chemical compositing indexes, and pregnancy warnings.</p>
-              </div>
 
-              {selectedPatient.scannedMedicine ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  
-                  {/* Image details */}
-                  <div className="space-y-4">
-                    <div className="aspect-video w-full rounded-2xl overflow-hidden border border-white/10 relative">
-                      <img
-                        src={selectedPatient.scannedMedicine.image}
-                        alt="Medication Container Scan"
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute top-4 right-4 px-2 py-1 bg-black/75 rounded text-[10px] text-teal-400 font-mono border border-teal-500/30">
-                        ✔ 100% OCR CONFIDENCE
-                      </div>
-                    </div>
-                    
-                    <div className="p-4 rounded-xl bg-white/5 space-y-1.5">
-                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Composition Index</span>
-                      <p className="text-xs text-slate-200">
-                        {selectedPatient.scannedMedicine.genericName} • Purified active compound elements verified against international pharmacology tables.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Pharmacological Breakdown */}
-                  <div className="space-y-4">
-                    <div className="space-y-1">
-                      <h4 className="text-lg font-bold text-white">{selectedPatient.scannedMedicine.name}</h4>
-                      <p className="text-xs text-slate-400">Manufacturer: {selectedPatient.scannedMedicine.manufacturer}</p>
-                      <p className="text-xs text-rose-400 font-mono">Expiry Date: {selectedPatient.scannedMedicine.expiry}</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Warnings & Side Effects</span>
-                      <div className="space-y-1 text-xs">
-                        {selectedPatient.scannedMedicine.warnings.map((w, i) => (
-                          <div key={i} className="flex gap-2 items-start text-slate-300">
-                            <span className="text-rose-500 font-bold">•</span>
-                            <span>{w}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="pt-4 border-t border-white/5">
-                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Patient Action Profile</span>
-                      <p className="text-xs text-white bg-slate-900 p-3 rounded-lg border border-white/5 italic">
-                        "Active instruction: {selectedPatient.scannedMedicine.dosage}"
-                      </p>
-                    </div>
-                  </div>
-
-                </div>
-              ) : (
-                <div className="py-24 text-center text-slate-500 border border-dashed border-white/10 rounded-2xl">
-                  No scanned medications registered. Select another patient on the dashboard to review their active bottle scans.
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* SUB-PAGE: SYMPTOM CHECKER */}
-          {activePage === "checker" && (
-            <div className={`p-6 rounded-2xl border ${borderCol} ${cardBg} space-y-6`}>
-              <div className="pb-3 border-b border-white/10">
-                <h3 className="text-base font-bold text-white">Clinical Symptom Triage Matrix</h3>
-                <p className="text-xs text-slate-400">Deep audit logs for symptoms analyzed by clinical multi-agent AI networks.</p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Active Triage Symptoms</span>
-                  <p className="text-sm text-slate-200 font-medium italic">"{selectedPatient.symptoms}"</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <span className="text-xs font-bold text-white block">Potential Diagnoses Likelihood List</span>
-                    <div className="space-y-2">
-                      {selectedPatient.possibleConditions.map((pc, i) => (
-                        <div key={i} className="p-3.5 rounded-xl bg-white/5 border border-white/5 space-y-1">
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-white">{pc.condition}</span>
-                            <span className={`px-2 py-0.5 text-[9px] font-mono rounded ${
-                              pc.likelihood === 'High' ? 'bg-rose-500 text-white' :
-                              pc.likelihood === 'Medium' ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-200'
-                            }`}>
-                              {pc.likelihood} LIKELIHOOD
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-slate-400 leading-relaxed">{pc.description}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <span className="text-xs font-bold text-white block">Multi-Agent AI Recommendation</span>
-                    <div className="p-4 rounded-xl bg-blue-600/10 border border-blue-500/20 space-y-3">
-                      <p className="text-xs text-slate-200 font-semibold">{selectedPatient.riskAssessment}</p>
-                      <ul className="space-y-1 text-xs">
-                        <li className="text-slate-300">• Stop any unprescribed NSAIDs immediately</li>
-                        <li className="text-slate-300">• Re-route to coronary monitoring if cardiac status updates</li>
-                        <li className="text-slate-300">• Request urgent electrolyte telemetry panels</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* SUB-PAGE: AI REPORTS HUB */}
           {activePage === "reports" && (
