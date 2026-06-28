@@ -26,6 +26,7 @@ interface DashboardViewProps {
   onStartMedicineScan: () => void;
   theme: "light" | "dark" | "contrast";
   fontSize: "normal" | "large";
+  userName?: string;
 }
 
 export function DashboardView({
@@ -37,7 +38,8 @@ export function DashboardView({
   onStartSymptomCheck,
   onStartMedicineScan,
   theme,
-  fontSize
+  fontSize,
+  userName
 }: DashboardViewProps) {
   
   const getRiskColors = (level: RiskLevel) => {
@@ -84,7 +86,7 @@ export function DashboardView({
           <h2 className={`text-2xl sm:text-3xl font-bold tracking-tight mb-2 font-display ${
             theme === "light" ? "text-slate-800" : "text-slate-100"
           }`}>
-            Welcome to <span className="text-blue-500 font-display">HealthMate AI</span>
+            Welcome back, <span className="text-blue-500 font-display">{userName || "HealthMate"}</span>
           </h2>
           <p className={`text-sm leading-relaxed mb-6 font-sans ${
             theme === "light" ? "text-slate-600" : "text-slate-300"

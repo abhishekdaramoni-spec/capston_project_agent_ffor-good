@@ -24,6 +24,7 @@ import {
 } from "./types";
 
 // Import modular components
+import { LoginPage } from "./components/LoginPage";
 import { DashboardView } from "./components/DashboardView";
 import { SymptomChecker } from "./components/SymptomChecker";
 import { MedicineScanner } from "./components/MedicineScanner";
@@ -51,6 +52,19 @@ const safeStorage = {
 };
 
 export default function App() {
+  // Authentication State
+  const [user, setUser] = useState<{ email: string; name: string } | null>(() => {
+    const local = safeStorage.getItem("healthmate-auth-user");
+    if (local) {
+      try {
+        return JSON.parse(local);
+      } catch (e) {
+        console.error("Failed to parse user session", e);
+      }
+    }
+    return null;
+  });
+
   // Theme & Accessibility States
   const [theme, setTheme] = useState<"light" | "dark" | "contrast">(() => {
     return (safeStorage.getItem("healthmate-theme") as "light" | "dark" | "contrast") || "dark";
@@ -188,6 +202,36 @@ export default function App() {
     setSelectedHistoricalReport(fullReport);
   };
 
+  const handleLogin = (userInfo: { email: string; name: string }) => {
+    setUser(userInfo);
+    safeStorage.setItem("healthmate-auth-user", JSON.stringify(userInfo));
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    safeStorage.setItem("healthmate-auth-user", "");
+  };
+
+  if (!user) {
+    return (
+      <div className={`min-h-screen flex flex-col justify-center transition-all duration-300 ${
+        fontSize === "large" ? "text-lg" : "text-sm"
+      } ${
+        theme === "light" 
+          ? "bg-[#F8FAFC] text-slate-900" 
+          : theme === "contrast" 
+          ? "bg-black text-white" 
+          : "bg-[#040812] text-slate-300"
+      }`}>
+        <LoginPage 
+          onLogin={handleLogin} 
+          theme={theme} 
+          fontSize={fontSize} 
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-screen flex flex-col transition-all duration-300 ${
       fontSize === "large" ? "text-lg" : "text-sm"
@@ -244,6 +288,27 @@ export default function App() {
 
           {/* Theme & Accessibility Bar */}
           <div className="flex items-center gap-2.5">
+            {/* User Profile Badge & Logout */}
+            <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border ${
+              theme === "light" 
+                ? "bg-slate-100 border-slate-200" 
+                : theme === "contrast" 
+                ? "bg-black border-white" 
+                : "bg-white/5 border-white/5"
+            }`}>
+              <span className={`text-[10px] sm:text-[11px] font-bold ${theme === "light" ? "text-slate-700" : "text-slate-200"}`}>
+                {user.name}
+              </span>
+              <span className="text-[10px] text-slate-500 font-mono">|</span>
+              <button
+                onClick={handleLogout}
+                className="text-[10px] text-rose-400 hover:text-rose-300 transition-colors font-bold cursor-pointer font-sans"
+                title="Log out of HealthMate"
+              >
+                Log Out
+              </button>
+            </div>
+
             {/* Font size toggler */}
             <button
               onClick={() => setFontSize(fontSize === "normal" ? "large" : "normal")}
@@ -310,6 +375,7 @@ export default function App() {
                     onStartMedicineScan={() => setActiveTab("scanner")}
                     theme={theme}
                     fontSize={fontSize}
+                    userName={user.name}
                   />
                 )}
 
