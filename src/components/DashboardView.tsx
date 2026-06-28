@@ -202,8 +202,8 @@ export function DashboardView({
             </div>
 
             <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
-              {savedMedicines.slice(0, 4).map((med) => (
-                <div key={med.id} className={`p-3 rounded-2xl border flex items-center justify-between ${
+              {savedMedicines.slice(0, 4).map((med, index) => (
+                <div key={med.id || `med-${index}`} className={`p-3 rounded-2xl border flex items-center justify-between ${
                   theme === "light" ? "bg-slate-50 border-slate-150" : "bg-white/5 border-white/5"
                 }`}>
                   <div>
@@ -250,9 +250,9 @@ export function DashboardView({
             </div>
 
             <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
-              {reminders.map((rem) => (
+              {reminders.map((rem, index) => (
                 <button
-                  key={rem.id}
+                  key={rem.id || `rem-${index}`}
                   onClick={() => toggleReminder(rem.id)}
                   className={`w-full text-left p-3 rounded-2xl border flex items-center gap-3 transition-colors cursor-pointer ${
                     theme === "light" ? "bg-slate-50 border-slate-150 hover:bg-slate-100" : "bg-white/5 border-white/5 hover:bg-white/10"
@@ -301,11 +301,11 @@ export function DashboardView({
         </h3>
 
         <div className="space-y-3">
-          {savedReports.map((rep) => {
+          {savedReports.map((rep, index) => {
             const colors = getRiskColors(rep.riskLevel);
             return (
               <div 
-                key={rep.id} 
+                key={rep.id || `rep-${index}`} 
                 className={`p-3.5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:shadow-sm transition-all ${
                   theme === "light" ? "bg-slate-50 border-slate-150 hover:bg-slate-100/70" : "bg-white/5 border-white/5 hover:bg-white/10"
                 }`}

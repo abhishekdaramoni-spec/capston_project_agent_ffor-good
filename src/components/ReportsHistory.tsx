@@ -37,11 +37,11 @@ export function ReportsHistory({
       </div>
 
       <div className="space-y-3">
-        {savedReports.map((rep) => {
+        {savedReports.map((rep, index) => {
           const colors = getRiskColors(rep.riskLevel);
           return (
             <div 
-              key={rep.id} 
+              key={rep.id || `rep-${index}`} 
               className={`p-4 rounded-3xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/[0.08] transition-colors ${
                 theme === "light" ? "bg-white border-slate-200" : "bg-white/5 border-white/5"
               }`}
