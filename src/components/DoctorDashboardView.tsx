@@ -118,6 +118,21 @@ export function DoctorDashboardView({
     "dashboard" | "patients" | "reports" | "emergency" | "settings"
   >("dashboard");
 
+  const [notification, setNotification] = useState<{ message: string; type: "success" | "warning" | "info" } | null>(null);
+
+  const showToast = (message: string, type: "success" | "warning" | "info" = "success") => {
+    setNotification({ message, type });
+  };
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
   // Roster database of 6 static mock patients with deep clinically relevant features
   const [patients, setPatients] = useState<Patient[]>([
     {
@@ -462,7 +477,7 @@ export function DoctorDashboardView({
       }
       return p;
     }));
-    alert(`Clinical records committed to hospital EHR system for patient ${selectedPatient.name}.`);
+    showToast(`Clinical records committed to hospital EHR system for patient ${selectedPatient.name}.`, "success");
   };
 
   // Toggle lab test selections
@@ -492,7 +507,7 @@ export function DoctorDashboardView({
       ]);
       setIsDispatching(null);
       setDispatchConfirmId(null);
-      alert(`Emergency Dispatch Sent! Hospital ICU desk has acknowledged secure telemetry payload for ${p.name}.`);
+      showToast(`Emergency Dispatch Sent! Hospital ICU desk has acknowledged secure telemetry payload for ${p.name}.`, "success");
     }, 1200);
   };
 
@@ -1035,7 +1050,7 @@ Report Handshake Signature: AES-256 System Integrity Checked.
                         </p>
 
                         <button
-                          onClick={() => alert(`Active medication records audit: ${selectedPatient.drugInteraction.explanation}`)}
+                          onClick={() => showToast(`Active medication records audit: ${selectedPatient.drugInteraction.explanation}`, "info")}
                           className="text-xs text-blue-400 hover:underline font-semibold block pt-1"
                         >
                           View Interaction Breakdown
@@ -1602,6 +1617,13 @@ Report Handshake Signature: AES-256 System Integrity Checked.
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {notification && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 p-4 bg-[#141A29] border border-white/10 rounded-2xl shadow-2xl max-w-sm animate-fade-in">
+          <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></div>
+          <div className="text-xs text-white font-medium">{notification.message}</div>
         </div>
       )}
 

@@ -228,12 +228,36 @@ export async function runOcrAgent(context: SharedContext, ai: GoogleGenAI | null
   const base64Image = context.uploadedImages[0];
 
   if (ai) {
-    const imagePart = {
-      inlineData: {
-        mimeType: "image/jpeg",
-        data: base64Image.split(",")[1] || base64Image,
-      },
-    };
+    let imagePart;
+    if (base64Image.startsWith("http://") || base64Image.startsWith("https://")) {
+      try {
+        const fetchRes = await fetch(base64Image);
+        const arrayBuffer = await fetchRes.arrayBuffer();
+        const base64Data = Buffer.from(arrayBuffer).toString("base64");
+        const mimeType = fetchRes.headers.get("content-type") || "image/jpeg";
+        imagePart = {
+          inlineData: {
+            mimeType,
+            data: base64Data,
+          },
+        };
+      } catch (fetchErr) {
+        console.error("Failed to fetch image in runOcrAgent:", fetchErr);
+        imagePart = {
+          inlineData: {
+            mimeType: "image/jpeg",
+            data: base64Image,
+          },
+        };
+      }
+    } else {
+      imagePart = {
+        inlineData: {
+          mimeType: "image/jpeg",
+          data: base64Image.split(",")[1] || base64Image,
+        },
+      };
+    }
 
     const prompt = `
       You are 'OCR Label Reader' Agent. Read and extract details from this medicine label.

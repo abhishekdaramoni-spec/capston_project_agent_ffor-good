@@ -1,6 +1,6 @@
 {
   "name": "HealthMate AI",
   "description": "A warm, simple healthcare assistant that scans medicines, checks symptoms, and generates easy-to-understand health reports using a secure multi-agent architecture.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

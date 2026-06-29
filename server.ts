@@ -449,12 +449,31 @@ app.post("/api/scan", rateLimitMiddleware, async (req, res) => {
           }
         `;
 
-        const imagePart = {
-          inlineData: {
-            mimeType: "image/jpeg",
-            data: medicineImage.split(",")[1] || medicineImage,
-          },
-        };
+        let imagePart;
+        if (medicineImage.startsWith("http://") || medicineImage.startsWith("https://")) {
+          try {
+            const fetchRes = await fetch(medicineImage);
+            const arrayBuffer = await fetchRes.arrayBuffer();
+            const base64Data = Buffer.from(arrayBuffer).toString("base64");
+            const mimeType = fetchRes.headers.get("content-type") || "image/jpeg";
+            imagePart = {
+              inlineData: {
+                mimeType,
+                data: base64Data,
+              },
+            };
+          } catch (fetchErr) {
+            console.error("Failed to fetch medicine image from URL:", fetchErr);
+            throw fetchErr;
+          }
+        } else {
+          imagePart = {
+            inlineData: {
+              mimeType: "image/jpeg",
+              data: medicineImage.split(",")[1] || medicineImage,
+            },
+          };
+        }
 
         const response = await ai.models.generateContent({
           model: "gemini-3.5-flash",
